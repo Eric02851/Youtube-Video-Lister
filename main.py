@@ -30,12 +30,11 @@ def getIndexs(response, playlistId, sortList):
     writeFile(response)
 
     for i in range(len(indexPositions)):
-        index = response[indexPositions[i] : indexPositions[i] + 9]
-        stripped = int(re.sub('[^0-9]','', index))
+        index = response[indexPositions[i] + 6 : response.find('"', indexPositions[i])]
 
-        if stripped not in sortList and rf"u0026list={playlistId}\u0026" in response[indexPositions[i] - 40 : indexPositions[i]]:
-            sortList.append(stripped)
-            sortedIndexs.append((indexPositions[i], stripped))
+        if index not in sortList and rf"u0026list={playlistId}\u0026" in response[indexPositions[i] - 40 : indexPositions[i]] and index.isdigit() == True:
+            sortList.append(index)
+            sortedIndexs.append((indexPositions[i], index))
 
     sortedIndexs.sort(key=takeSecond)
     return sortedIndexs, sortList
@@ -51,14 +50,13 @@ def main():
     sortList = []
     videoIdList = []
 
-    playlistUrl = "https://www.youtube.com/playlist?list=UUBa659QWEk1AI4Tg--mrJ2A&playnext=1&index=1"
+    playlistUrl = "https://www.youtube.com/playlist?list=UU554eY5jNUfDq3yDOJYirOQ&playnext=1&index=1"
     response = getPlaylistPage(playlistUrl)
 
     playlistId, totalVideos = getPlaylistId_totalVideos(response)
 
     indexList, sortList = getIndexs(response, playlistId, sortList)
     videoIdList = getVideoIds(response, indexList, videoIdList)
-    print(len(videoIdList))
 
     while len(videoIdList) < totalVideos:
         playlistUrl = rf"https://www.youtube.com/watch?v={videoIdList[-1]}&list={playlistId}&index={indexList[-1][1]}"
@@ -70,5 +68,6 @@ def main():
         print(len(videoIdList))
 
     print(videoIdList)
+    print(len(videoIdList))
 
 main()
