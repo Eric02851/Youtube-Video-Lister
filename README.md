@@ -1,2 +1,2 @@
-# Spoon Kid Music Finder
- Returns a list of all the music used in spoon kid's videos
+# Youtube-Video-Lister
+ Returns a list of all of the videos posted by a channel.
