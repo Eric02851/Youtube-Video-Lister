@@ -1,23 +1,15 @@
 import requests
 import re
 
-def writeFile(inputStr):
-    f = open("dumpFile.txt", "w")
-    f.write(inputStr)
-    f.close()
-
 def getPlaylistPage(playlistUrl):
     return requests.get(playlistUrl).text
 
 def getPlaylistId_totalVideos(response):
-    playlistIndex = response.find(r"\u0026list=") + 11
-    playlistId = response[playlistIndex : playlistIndex + 24]
-
     totalVideosIndexStart = response.find('"totalVideos"') + 14
     totalVideosIndexEnd = response.find(',', totalVideosIndexStart)
     totalVideos = int(response[totalVideosIndexStart : totalVideosIndexEnd])
 
-    return playlistId, totalVideos
+    return totalVideos
 
 def takeSecond(elem):
     return elem[1]
@@ -26,8 +18,6 @@ def getIndexs(response, playlistId, sortList):
     indexNumbers = []
     sortedIndexs = []
     indexPositions = [m.start() for m in re.finditer("index=", response)]
-
-    writeFile(response)
 
     for i in range(len(indexPositions)):
         index = response[indexPositions[i] + 6 : response.find('"', indexPositions[i])]
@@ -46,17 +36,26 @@ def getVideoIds(response, indexList, videoIdList):
 
     return videoIdList
 
-def main():
+def getPlaylist(channelId):
+    response = requests.get(f"https://www.youtube.com/channel/{channelId}/videos").text
+    index = response.find("list=")
+    playlistId = response[index + 5 : index + 29]
+
+    return f"https://www.youtube.com/playlist?list={playlistId}&playnext=1&index=1", playlistId
+
+def main(channelId):
     sortList = []
     videoIdList = []
 
-    playlistUrl = "https://www.youtube.com/playlist?list=UU554eY5jNUfDq3yDOJYirOQ&playnext=1&index=1"
+    playlistUrl, playlistId = getPlaylist(channelId)
     response = getPlaylistPage(playlistUrl)
+    print(playlistUrl)
 
-    playlistId, totalVideos = getPlaylistId_totalVideos(response)
+    totalVideos = getPlaylistId_totalVideos(response)
 
     indexList, sortList = getIndexs(response, playlistId, sortList)
     videoIdList = getVideoIds(response, indexList, videoIdList)
+    print(len(videoIdList))
 
     while len(videoIdList) < totalVideos:
         playlistUrl = rf"https://www.youtube.com/watch?v={videoIdList[-1]}&list={playlistId}&index={indexList[-1][1]}"
@@ -69,5 +68,9 @@ def main():
 
     print(videoIdList)
     print(len(videoIdList))
+    
+    with open('videoIds.txt', 'w') as f:
+        for item in videoIdList:
+            f.write("%s\n" % item)
 
-main()
+main("UCBa659QWEk1AI4Tg--mrJ2A")
